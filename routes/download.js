@@ -8,7 +8,7 @@ router.get("/", (req, res) => {
   if (fs.existsSync(filePath)) {
     res.download(filePath);
   } else {
-    res.status(404).json({ error: "File not found" });
+    res.status(404).json({ error: "Datoteka nije pronađena." });
   }
 });
 

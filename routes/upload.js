@@ -26,7 +26,7 @@ router.post("/", upload.single("file"), async (req, res) => {
     const prompt = `
       You are an assistant that extracts student names and their grades from raw table data. 
       Convert this data into JSON format like [{"name": "Full Name", "grade": "Grade"}].
-      Here is the table data: ${fileContent}
+      Ignore students with no names or grades. Here is the table data: ${fileContent}
     `;
 
     const gptResponse = await client.chat.completions.create({
@@ -37,8 +37,6 @@ router.post("/", upload.single("file"), async (req, res) => {
       ],
     });
 
-    console.log("Response: ");
-    console.log(gptResponse.choices[0].message.content);
     const extractedData = gptResponse.choices[0].message.content.replace(
       /```json|```/g,
       "",
@@ -48,12 +46,18 @@ router.post("/", upload.single("file"), async (req, res) => {
     const outputFilePath = "output.json";
     fs.writeFileSync(outputFilePath, JSON.stringify(jsonData, null, 2));
 
-    res.json({ message: "Data extracted successfully", data: jsonData });
+    fs.unlink(filePath, (err) => {
+      if (err) {
+        console.error("Došlo je do greške pri brisanju datoteke:", err);
+      }
+    });
+
+    res.json({ message: "Uspješna pretvorba datoteke.", data: jsonData });
   } catch (error) {
     console.error(error);
     res
       .status(500)
-      .json({ error: "Something went wrong", details: error.message });
+      .json({ error: "Došlo je do greške.", details: error.message });
   }
 });
 
